@@ -7,9 +7,10 @@ AI-powered portfolio dashboard for tracking stocks and crypto, detecting unusual
 ## Screenshots
 
 <!-- Add your 3 screenshots below -->
-![Dashboard](screenshots/dashboard.png)
-![Anomaly Detection](screenshots/anomalies.png)
-![Sentiment Analysis](screenshots/sentiment.png)
+<img width="1440" height="812" alt="Screenshot 2026-06-09 at 1 37 23 PM" src="https://github.com/user-attachments/assets/14e32cbb-29bb-4d67-9db7-2144694bc06e" />
+
+<img width="346" height="544" alt="Screenshot 2026-06-09 at 1 37 49 PM" src="https://github.com/user-attachments/assets/bddf48bd-0fa4-48e4-b989-2933d1ed90b8" />  <img width="1440" height="812" alt="Screenshot 2026-06-09 at 1 38 25 PM" src="https://github.com/user-attachments/assets/190ba7d0-a7d3-4864-987f-53877707b2bd" />
+
 
 ---
 
