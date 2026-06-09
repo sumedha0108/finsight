@@ -3,11 +3,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from apscheduler.schedulers.background import BackgroundScheduler
 from fetcher import fetch_stock_price, fetch_crypto_price
-from database import get_latest_sentiment, save_price, get_recent_prices, save_anomaly, get_recent_anomalies, get_all_symbols
+from database import (
+    get_latest_sentiment, save_price, get_recent_prices, save_anomaly,
+    get_recent_anomalies, get_all_symbols, save_explanation,
+    add_asset, delete_asset, cleanup_anomalies
+)
 from anomaly import detect_anomaly
 from ai.explainer import explain_symbol
 from pydantic import BaseModel
-from database import save_price, get_recent_prices, save_anomaly, get_recent_anomalies, get_all_symbols, get_db, save_explanation
 from ai.sentiment import get_sentiment
 import time
 
@@ -105,15 +108,9 @@ def add_symbol(req: SymbolRequest):
             raise HTTPException(status_code=400, detail="Symbol not found on yfinance")
         save_price(data["symbol"], data["price"], data["change_pct"], data["currency"], data["type"], data["exchange"])
 
-    # save to assets table so scheduler picks it up
-    db = get_db()
     try:
-        db.table("assets").insert({
-            "symbol": symbol,
-            "type": req.type,
-            "coin_id": None
-        }).execute()
-    except Exception as e:
+        add_asset(symbol, req.type)
+    except Exception:
         raise HTTPException(status_code=400, detail="Symbol already being tracked")
 
     return {"message": f"{symbol} added successfully"}
@@ -121,34 +118,21 @@ def add_symbol(req: SymbolRequest):
 
 @app.delete("/symbols/{symbol}")
 def delete_symbol(symbol: str):
-    db = get_db()
-    # remove from assets so scheduler stops tracking it
-    db.table("assets")\
-        .delete()\
-        .eq("symbol", symbol.upper())\
-        .execute()
+    delete_asset(symbol.upper())
     return {"message": f"{symbol.upper()} removed successfully"}
 
 
 def cleanup_old_anomalies():
-    db = get_db()
-    db.table("anomalies")\
-        .delete()\
-        .lt("detected_at", "now() - interval '7 days'")\
-        .execute()
+    from datetime import datetime, timezone, timedelta
+    cleanup_anomalies(datetime.now(timezone.utc) - timedelta(days=7))
     print("🧹 Old anomalies cleaned up")
 
 scheduler.add_job(cleanup_old_anomalies, "interval", hours=24)
 
 @app.delete("/anomalies/clear")
 def clear_old_anomalies():
-    db = get_db()
     from datetime import datetime, timezone, timedelta
-    cutoff = (datetime.now(timezone.utc) - timedelta(hours=12)).isoformat()
-    db.table("anomalies")\
-        .delete()\
-        .lt("detected_at", cutoff)\
-        .execute()
+    cleanup_anomalies(datetime.now(timezone.utc) - timedelta(hours=12))
     return {"message": "Anomalies older than 12 hours cleared"}
 
 @app.get("/sentiment/bulk")

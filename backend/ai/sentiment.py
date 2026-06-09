@@ -1,8 +1,7 @@
 from news import fetch_news
 from ai.llm import generate_with_gemini, generate_with_ollama
-from database import get_db
+from database import save_sentiment
 import json
-from datetime import datetime, timezone
 
 def build_sentiment_prompt(symbol: str, news: list):
     headlines = "\n".join([f"- {n['title']}" for n in news]) if news else "No recent news found."
@@ -47,27 +46,6 @@ def generate_sentiment(prompt: str):
         return result
 
     return None
-
-def save_sentiment(symbol: str, data: dict):
-    db = get_db()
-
-    # delete old sentiment for this symbol
-    db.table("sentiment")\
-        .delete()\
-        .eq("symbol", symbol)\
-        .execute()
-
-    # insert fresh
-    db.table("sentiment").insert({
-        "symbol": symbol,
-        "overall": data["overall"],
-        "positive_count": data["positive_count"],
-        "negative_count": data["negative_count"],
-        "neutral_count": data["neutral_count"],
-        "reasoning": data["reasoning"],
-        "headlines": data["headlines"],
-        "analyzed_at": datetime.now(timezone.utc).isoformat()
-    }).execute()
 
 def get_sentiment(symbol: str):
     news = fetch_news(symbol)
