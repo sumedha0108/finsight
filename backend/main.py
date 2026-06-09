@@ -144,7 +144,9 @@ def analyze_all_sentiment():
         cached = get_latest_sentiment(s["symbol"])
         if cached:
             from datetime import datetime, timezone, timedelta
-            analyzed_at = datetime.fromisoformat(cached["analyzed_at"])
+            analyzed_at = cached["analyzed_at"]
+            if analyzed_at.tzinfo is None:
+                analyzed_at = analyzed_at.replace(tzinfo=timezone.utc)
             if datetime.now(timezone.utc) - analyzed_at < timedelta(hours=6):
                 print(f"⏭️ {s['symbol']} sentiment cached, skipping...")
                 results.append(cached)
@@ -165,7 +167,9 @@ def analyze_sentiment(symbol: str):
     cached = get_latest_sentiment(symbol.upper())
     if cached:
         from datetime import datetime, timezone, timedelta
-        analyzed_at = datetime.fromisoformat(cached["analyzed_at"])
+        analyzed_at = cached["analyzed_at"]
+        if analyzed_at.tzinfo is None:
+            analyzed_at = analyzed_at.replace(tzinfo=timezone.utc)
         if datetime.now(timezone.utc) - analyzed_at < timedelta(hours=6):
             return cached
     

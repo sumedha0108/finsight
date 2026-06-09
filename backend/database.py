@@ -76,7 +76,10 @@ def save_anomaly(symbol: str, severity: str, change_pct: float, z_score: float, 
             existing = cur.fetchone()
 
             if existing:
-                if existing["detected_at"].replace(tzinfo=timezone.utc) >= since_1h:
+                detected_at = existing["detected_at"]
+                if detected_at.tzinfo is None:
+                    detected_at = detected_at.replace(tzinfo=timezone.utc)
+                if detected_at >= since_1h:
                     print(f"⏭️ {symbol} checked less than 1 hour ago, skipping...")
                     return
                 cur.execute(
